@@ -3,18 +3,23 @@ import { NextRequest, NextResponse } from "next/server";
 // User-Agent is required by most geocoding APIs
 const USER_AGENT = "GeoImageGenerator/1.0 github.com/PalMachulla/VariousTests";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const lat = searchParams.get("lat");
-  const lon = searchParams.get("lon");
+// Interface for the location data
+export interface LocationInfo {
+  city: string | null;
+  county: string | null;
+  state: string | null;
+  country: string | null;
+  country_code: string | null;
+  postcode: string | null;
+  display_name: string | null;
+  best_name: string;
+}
 
-  if (!lat || !lon) {
-    return NextResponse.json(
-      { error: "Latitude and longitude are required" },
-      { status: 400 }
-    );
-  }
-
+// Export this function so other API routes can use it directly
+export async function getLocationFromCoordinates(
+  lat: string,
+  lon: string
+): Promise<LocationInfo> {
   try {
     // We'll use the free OpenStreetMap Nominatim API for reverse geocoding
     // Note: For production use, please respect their usage policy: https://operations.osmfoundation.org/policies/nominatim/
@@ -34,7 +39,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     // Extract various location data with fallbacks
-    const locationInfo = {
+    const locationInfo: LocationInfo = {
       city:
         data.address?.city ||
         data.address?.town ||
@@ -62,10 +67,41 @@ export async function GET(request: NextRequest) {
       `Reverse geocoding: Found "${locationInfo.best_name}" at coordinates ${lat},${lon}`
     );
 
+    return locationInfo;
+  } catch (error: unknown) {
+    console.error("Error with reverse geocoding:", error);
+    // Return a default location object with "Unknown location"
+    return {
+      city: null,
+      county: null,
+      state: null,
+      country: null,
+      country_code: null,
+      postcode: null,
+      display_name: null,
+      best_name: "Unknown location",
+    };
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
+
+  if (!lat || !lon) {
+    return NextResponse.json(
+      { error: "Latitude and longitude are required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const locationInfo = await getLocationFromCoordinates(lat, lon);
+
     return NextResponse.json({
       success: true,
       location: locationInfo,
-      raw: data, // Include raw data for debugging
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

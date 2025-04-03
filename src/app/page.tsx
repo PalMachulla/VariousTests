@@ -245,53 +245,75 @@ export default function Home() {
     }
   };
 
-  const createAndSetPrompt = (
+  // The enhanced prompt generation function using OpenAI
+  const createAndSetPrompt = async (
     loc: LocationData,
     weatherData: WeatherData
-  ): string => {
-    // Get the subject description based on the selected type
+  ): Promise<string> => {
+    // Start with a fallback prompt in case the enhancement API fails
     const subjectDescription = getSubjectDescription(selectedSubject);
 
-    // --- Customize your prompt structure here! ---
-    const generatedPrompt = weatherData.creativeDescription
-      ? `Lifestyle magazine cover photo of an outdoor scene in ${
-          weatherData.city || "a beautiful location"
-        }. ${weatherData.creativeDescription} 
-        ${subjectDescription}
-        Street signs or direction signs that say "Dentsu" and "${(
-          weatherData.city || "LOCATION"
-        ).toUpperCase()}" in bold, easy-to-read font.
-        
-        GPS coordinates: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(
-          4
-        )}. 
-        Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
-        Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations.
-        Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics.
-        Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio.
-        Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth.
-        Subtle micro-contrast typical of GFX system. The text on signs must be perfectly legible and clear.`
-      : `Lifestyle magazine cover photo of an outdoor scene in ${
-          weatherData.city || "a beautiful location"
-        }, with people that resemble the essence of ${
-          weatherData.country || "the local culture"
-        } in the way they dress. Add colorful tones in fabric and clothing. The clothes have clear, fashion style. Around there are street signs or signs with text that says "Dentsu" and "${(
-          weatherData.city || "LOCATION"
-        ).toUpperCase()}" printed on in bold. Easy-to-read font. The text appears as location or direction signs. ${subjectDescription} The photo shows the location during ${
-          weatherData.description
-        } weather, with a temperature around ${
-          typeof weatherData.temp === "number"
-            ? Math.round(weatherData.temp)
-            : weatherData.temp
-        }°C. GPS coordinates: ${loc.latitude.toFixed(
-          4
-        )}, ${loc.longitude.toFixed(
-          4
-        )}. Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens. Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations. Natural outdoor lighting creating directional soft illumination. Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics. Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio. Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth. Subtle micro-contrast typical of GFX system. The text on clothing must be perfectly legible and clear.`;
-    // --- End of customization ---
+    const fallbackPrompt = `Lifestyle magazine cover photo of an outdoor scene in ${
+      weatherData.city || "a beautiful location"
+    }, ${weatherData.country || "unknown country"}. ${
+      weatherData.creativeDescription || ""
+    } 
+    ${subjectDescription}
+    Street signs or direction signs that say "Dentsu" and "${(
+      weatherData.city || "LOCATION"
+    ).toUpperCase()}" in bold, easy-to-read font.
+    
+    GPS coordinates: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}. 
+    Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
+    Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations.
+    Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics.
+    Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio.
+    Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth.
+    Subtle micro-contrast typical of GFX system. The text on signs must be perfectly legible and clear.`;
 
-    setPrompt(generatedPrompt);
-    return generatedPrompt;
+    updateStatus("Creating magic prompt...");
+
+    try {
+      // Call our enhance-prompt API
+      const response = await fetch("/api/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: weatherData.city || "Unknown location",
+          country: weatherData.country || "Unknown country",
+          weather: {
+            temp: weatherData.temp,
+            description: weatherData.description,
+            cloudCover: weatherData.cloudCover,
+            windSpeed: weatherData.windSpeed,
+            creativeDescription: weatherData.creativeDescription,
+          },
+          subject: selectedSubject,
+          coordinates: {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          },
+          basePrompt: fallbackPrompt,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to enhance prompt");
+      }
+
+      const data = await response.json();
+      const enhancedPrompt = data.prompt;
+
+      console.log("Enhanced prompt:", enhancedPrompt);
+      updateStatus("Magic prompt created!");
+      setPrompt(enhancedPrompt);
+      return enhancedPrompt;
+    } catch (error) {
+      console.error("Error enhancing prompt:", error);
+      updateStatus("Using standard prompt (enhancement failed)");
+      setPrompt(fallbackPrompt);
+      return fallbackPrompt;
+    }
   };
 
   // Toggle between weather APIs
@@ -462,14 +484,16 @@ export default function Home() {
     }
   };
 
-  // Handler for subject type buttons
+  // Handler for subject type buttons - update to immediately create magic prompt if possible
   const handleSubjectSelect = (subjectType: SubjectType) => {
     setSelectedSubject(subjectType);
     updateStatus(`Selected subject type: ${subjectType}`);
 
     // If we already have location and weather data, update the prompt
     if (location && weather) {
-      createAndSetPrompt(location, weather);
+      createAndSetPrompt(location, weather).catch((error) =>
+        console.error("Error creating prompt after subject selection:", error)
+      );
     }
   };
 
@@ -489,7 +513,10 @@ export default function Home() {
       const locWithName = await handleGetLocationName(loc);
       // Weather fetch failures are handled internally in handleGetWeather
       const weatherData = await handleGetWeather(locWithName);
-      const generatedPrompt = createAndSetPrompt(locWithName, weatherData);
+      const generatedPrompt = await createAndSetPrompt(
+        locWithName,
+        weatherData
+      );
       await handleStartGeneration(generatedPrompt);
       // No need to setIsLoading(false) here, handleStartGeneration/polling handles it
     } catch (error: unknown) {

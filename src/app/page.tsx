@@ -8,6 +8,7 @@ interface LocationData {
   latitude: number;
   longitude: number;
   altitude?: number;
+  locationName?: string; // Added for storing the location name from geocoding
 }
 
 interface WeatherData {
@@ -116,6 +117,39 @@ export default function Home() {
     });
   };
 
+  // New function to get location name from coordinates
+  const handleGetLocationName = async (
+    loc: LocationData
+  ): Promise<LocationData> => {
+    updateStatus("Determining location name...");
+    try {
+      const response = await fetch(
+        `/api/geocode?lat=${loc.latitude}&lon=${loc.longitude}`
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to determine location name");
+      }
+
+      // Update location with name
+      const updatedLoc = {
+        ...loc,
+        locationName: data.location.best_name,
+      };
+
+      updateStatus(`Location identified as: ${updatedLoc.locationName}`);
+      setLocation(updatedLoc);
+      return updatedLoc;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.warn(`Could not determine location name: ${errorMessage}`);
+      // Proceed without location name, the flow shouldn't break
+      return loc;
+    }
+  };
+
   const handleGetWeather = async (loc: LocationData): Promise<WeatherData> => {
     updateStatus("Fetching weather data...");
     try {
@@ -140,8 +174,12 @@ export default function Home() {
         weatherInfo = {
           location:
             data.location ||
+            loc.locationName || // Use geocoded location name if available
             `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
-          city: data.location || "Unnamed location",
+          city:
+            data.location ||
+            loc.locationName || // Use geocoded location name if available
+            "Unnamed location",
           country: "", // MET Norway doesn't provide country info
           temp: data.weather.temperature,
           description: data.weather.symbol.replace(/_/g, " "),
@@ -153,12 +191,15 @@ export default function Home() {
         };
 
         updateStatus(
-          `Weather: ${weatherInfo.temp}°C, ${weatherInfo.description} with creative insight from AI`
+          `Weather for ${weatherInfo.city}: ${weatherInfo.temp}°C, ${weatherInfo.description} with creative insight from AI`
         );
       } else {
         // Format data from original weather API
         weatherInfo = {
-          city: data.city || "Unknown location",
+          city:
+            data.city ||
+            loc.locationName || // Use geocoded location name if available
+            "Unknown location",
           country: data.country || "",
           description: data.description || "unknown conditions",
           temp: data.temp,
@@ -175,7 +216,7 @@ export default function Home() {
       // Create default weather data with unknown values
       updateStatus("Could not fetch weather data, using default values.");
       const defaultWeather: WeatherData = {
-        city: "Unknown location",
+        city: loc.locationName || "Unknown location", // Use geocoded location name if available
         country: "",
         description: "unknown conditions",
         temp: "unknown",
@@ -411,9 +452,11 @@ export default function Home() {
 
     try {
       const loc = await handleGetLocation();
+      // Get location name before fetching weather
+      const locWithName = await handleGetLocationName(loc);
       // Weather fetch failures are handled internally in handleGetWeather
-      const weatherData = await handleGetWeather(loc);
-      const generatedPrompt = createAndSetPrompt(loc, weatherData);
+      const weatherData = await handleGetWeather(locWithName);
+      const generatedPrompt = createAndSetPrompt(locWithName, weatherData);
       await handleStartGeneration(generatedPrompt);
       // No need to setIsLoading(false) here, handleStartGeneration/polling handles it
     } catch (error: unknown) {

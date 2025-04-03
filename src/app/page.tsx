@@ -237,7 +237,7 @@ export default function Home() {
       case "portrait":
         return "A striking portrait of a local person with authentic facial expressions and natural lighting. The face is captured with striking detail, showing the character and personality in their eyes.";
       case "humans":
-        return "People actively engaging with their surroundings, showing authentic emotions and interactions. Small groups of locals going about their daily activities, creating a sense of community and place.";
+        return "A vibrant scene of people interacting and engaging with each other in a social setting. Small groups facing the camera or angled to show their faces and expressions. People are shown in conversations, laughing, and connecting in authentic ways. Focus on capturing facial expressions, emotions, and the community atmosphere, avoiding shots from behind or of people walking away.";
       case "nature":
         return "The local landscape dominates the scene, showcasing the environmental features, scenery, and natural elements characteristic of the region. No human presence, focusing entirely on the raw beauty of the location.";
       case "custom":

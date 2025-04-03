@@ -52,6 +52,33 @@ function getLightingDescription(timeOfDay: string, cloudCover: number): string {
   }
 }
 
+// Get additional instructions based on subject type
+function getSubjectSpecificInstructions(subject: string): string {
+  switch (subject) {
+    case "humans":
+      return `
+      IMPORTANT COMPOSITION GUIDELINES:
+      - Position people in groups FACING the camera or at 3/4 angles to show their faces
+      - Capture lively interactions, conversations, and authentic social connections
+      - Show clear facial expressions and emotional engagement between people
+      - Frame the scene to focus on the front or side of people, NOT their backs
+      - AVOID showing people walking away from the camera
+      - Prioritize scenes where people are actively engaging with each other rather than just moving through the space
+      - Create a sense of community and social interaction that feels authentic to the location
+      `;
+    case "portrait":
+      return `
+      IMPORTANT COMPOSITION GUIDELINES:
+      - Focus on capturing one subject's face with clear visibility
+      - Ensure good lighting on facial features while maintaining natural look
+      - Create depth with slight background blur while keeping subject sharp
+      - Frame to include some environmental context but keep focus on the person
+      `;
+    default:
+      return "";
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { location, country, weather, subject, coordinates, basePrompt } =
@@ -70,6 +97,9 @@ export async function POST(request: NextRequest) {
       timeOfDay,
       weather.cloudCover || 0
     );
+
+    // Get subject-specific instructions
+    const subjectInstructions = getSubjectSpecificInstructions(subject);
 
     // Preserve the Fujifilm style requirements
     const fujifilmStyle = `Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
@@ -98,7 +128,7 @@ export async function POST(request: NextRequest) {
       subject === "portrait"
         ? "a portrait of a local person"
         : subject === "humans"
-        ? "people engaged in activities"
+        ? "people engaged in social activities and interactions"
         : "a natural landscape scene"
     } that reflects:
     
@@ -120,6 +150,8 @@ export async function POST(request: NextRequest) {
     GPS coordinates: ${coordinates.latitude.toFixed(
       4
     )}, ${coordinates.longitude.toFixed(4)}
+    
+    ${subjectInstructions}
     
     The prompt should be detailed and vivid, focusing on the scene, environment, lighting, and people's appearance/activities if applicable. DO NOT include any technical camera settings in your prompt.
     `;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from "openai";
-import { getLocationFromCoordinates } from "../geocode/route";
+import { getLocationFromCoordinates } from "../utils/geocoding";
 
 // Initialize OpenAI
 const openai = new OpenAI({

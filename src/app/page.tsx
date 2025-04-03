@@ -239,7 +239,7 @@ export default function Home() {
       case "humans":
         return "People actively engaging with their surroundings, showing authentic emotions and interactions. Small groups of locals going about their daily activities, creating a sense of community and place.";
       case "nature":
-        return "The natural landscape dominates the scene, showcasing the environmental features, flora, and fauna characteristic of the region. No human presence, focusing entirely on the raw beauty of nature.";
+        return "The local landscape dominates the scene, showcasing the environmental features, scenery, and natural elements characteristic of the region. No human presence, focusing entirely on the raw beauty of the location.";
       case "custom":
       default:
         return "People are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens.";
@@ -613,7 +613,7 @@ export default function Home() {
                 ? "border-black bg-black text-white"
                 : "border-gray-300 hover:bg-gray-100"
             }`}
-            title="Generate nature image"
+            title="Generate landscape or scenery image"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -634,7 +634,7 @@ export default function Home() {
               <path d="M2 12s2 4 5 4" />
               <path d="M22 12s-2 4-5 4" />
             </svg>
-            <span className="text-sm font-medium">Nature</span>
+            <span className="text-sm font-medium">Scenery</span>
           </button>
         </div>
 

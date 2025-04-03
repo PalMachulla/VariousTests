@@ -38,6 +38,9 @@ interface ReplicatePrediction {
   // other fields from Replicate response...
 }
 
+// Subject types for different image styles
+type SubjectType = "portrait" | "humans" | "nature" | "custom";
+
 export default function Home() {
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +53,7 @@ export default function Home() {
   const [showFetchButton, setShowFetchButton] = useState<boolean>(false);
   const [placeholderColor, setPlaceholderColor] = useState<string>("#e0f2f1"); // Default soft teal
   const [useMetNorwayApi, setUseMetNorwayApi] = useState<boolean>(true); // Toggle between APIs
+  const [selectedSubject, setSelectedSubject] = useState<SubjectType>("custom");
 
   // Use error for conditional display in the UI
   const hasError = Boolean(error);
@@ -187,7 +191,7 @@ export default function Home() {
           windSpeed: data.weather.windSpeed,
           cloudCover: data.weather.cloudCover,
           precipitation: data.weather.precipitation,
-          creativeDescription: data.weather.description, // Creative description from OpenAI
+          creativeDescription: data.weather.creativeDescription, // Creative description from OpenAI
         };
 
         updateStatus(
@@ -226,16 +230,34 @@ export default function Home() {
     }
   };
 
+  // Get subject description based on selected type
+  const getSubjectDescription = (type: SubjectType): string => {
+    switch (type) {
+      case "portrait":
+        return "A striking portrait of a local person with authentic facial expressions and natural lighting. The face is captured with striking detail, showing the character and personality in their eyes.";
+      case "humans":
+        return "People actively engaging with their surroundings, showing authentic emotions and interactions. Small groups of locals going about their daily activities, creating a sense of community and place.";
+      case "nature":
+        return "The natural landscape dominates the scene, showcasing the environmental features, flora, and fauna characteristic of the region. No human presence, focusing entirely on the raw beauty of nature.";
+      case "custom":
+      default:
+        return "People are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens.";
+    }
+  };
+
   const createAndSetPrompt = (
     loc: LocationData,
     weatherData: WeatherData
   ): string => {
+    // Get the subject description based on the selected type
+    const subjectDescription = getSubjectDescription(selectedSubject);
+
     // --- Customize your prompt structure here! ---
     const generatedPrompt = weatherData.creativeDescription
       ? `Lifestyle magazine cover photo of an outdoor scene in ${
           weatherData.city || "a beautiful location"
         }. ${weatherData.creativeDescription} 
-        People are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens.
+        ${subjectDescription}
         Street signs or direction signs that say "Dentsu" and "${(
           weatherData.city || "LOCATION"
         ).toUpperCase()}" in bold, easy-to-read font.
@@ -255,7 +277,7 @@ export default function Home() {
           weatherData.country || "the local culture"
         } in the way they dress. Add colorful tones in fabric and clothing. The clothes have clear, fashion style. Around there are street signs or signs with text that says "Dentsu" and "${(
           weatherData.city || "LOCATION"
-        ).toUpperCase()}" printed on in bold. Easy-to-read font. The text appears as location or direction signs. One or more people are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens. The photo shows the location during ${
+        ).toUpperCase()}" printed on in bold. Easy-to-read font. The text appears as location or direction signs. ${subjectDescription} The photo shows the location during ${
           weatherData.description
         } weather, with a temperature around ${
           typeof weatherData.temp === "number"
@@ -440,6 +462,17 @@ export default function Home() {
     }
   };
 
+  // Handler for subject type buttons
+  const handleSubjectSelect = (subjectType: SubjectType) => {
+    setSelectedSubject(subjectType);
+    updateStatus(`Selected subject type: ${subjectType}`);
+
+    // If we already have location and weather data, update the prompt
+    if (location && weather) {
+      createAndSetPrompt(location, weather);
+    }
+  };
+
   // Main function triggered by the primary button
   const handleGenerateClick = async () => {
     setIsLoading(true);
@@ -502,13 +535,106 @@ export default function Home() {
           </button>
         </div>
 
+        {/* Subject type selection buttons */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <button
+            onClick={() => handleSubjectSelect("portrait")}
+            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+              selectedSubject === "portrait"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+            title="Generate portrait image"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-2"
+            >
+              <circle cx="12" cy="8" r="5" />
+              <path d="M20 21a8 8 0 0 0-16 0" />
+            </svg>
+            <span className="text-sm font-medium">Portrait</span>
+          </button>
+
+          <button
+            onClick={() => handleSubjectSelect("humans")}
+            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+              selectedSubject === "humans"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+            title="Generate image with people"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-2"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span className="text-sm font-medium">Humans</span>
+          </button>
+
+          <button
+            onClick={() => handleSubjectSelect("nature")}
+            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+              selectedSubject === "nature"
+                ? "border-black bg-black text-white"
+                : "border-gray-300 hover:bg-gray-100"
+            }`}
+            title="Generate nature image"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mb-2"
+            >
+              <path d="M21 8a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+              <path d="M21 12c0 4.418-3.582 8-8 8s-8-3.582-8-8" />
+              <path d="M12 20v-8" />
+              <path d="M8 16c1 1 3 2 4 2s3-1 4-2" />
+              <path d="M2 12s2 4 5 4" />
+              <path d="M22 12s-2 4-5 4" />
+            </svg>
+            <span className="text-sm font-medium">Nature</span>
+          </button>
+        </div>
+
         {/* Prompt input */}
         <textarea
           className="w-full p-4 mb-6 border border-gray-300 rounded-lg text-base resize-none"
           rows={3}
           placeholder="Enter a description of what you want to generate..."
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            setPrompt(e.target.value);
+            setSelectedSubject("custom");
+          }}
         />
 
         {/* Image preview area */}

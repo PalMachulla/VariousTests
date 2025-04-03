@@ -7,13 +7,20 @@ import Image from "next/image"; // Use Next.js Image component
 interface LocationData {
   latitude: number;
   longitude: number;
+  altitude?: number;
 }
 
 interface WeatherData {
-  city: string;
+  location?: string;
+  city?: string;
   description: string;
   temp: number | string; // Can be number or 'unknown'
-  country: string;
+  country?: string;
+  symbol?: string;
+  windSpeed?: number;
+  cloudCover?: number;
+  precipitation?: number;
+  creativeDescription?: string;
 }
 
 // Define proper error types
@@ -41,6 +48,7 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showFetchButton, setShowFetchButton] = useState<boolean>(false);
   const [placeholderColor, setPlaceholderColor] = useState<string>("#e0f2f1"); // Default soft teal
+  const [useMetNorwayApi, setUseMetNorwayApi] = useState<boolean>(true); // Toggle between APIs
 
   // Use error for conditional display in the UI
   const hasError = Boolean(error);
@@ -91,6 +99,7 @@ export default function Home() {
           const loc = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
+            altitude: position.coords.altitude || undefined,
           };
           updateStatus(
             `Location acquired: ${loc.latitude.toFixed(
@@ -110,20 +119,58 @@ export default function Home() {
   const handleGetWeather = async (loc: LocationData): Promise<WeatherData> => {
     updateStatus("Fetching weather data...");
     try {
-      const response = await fetch(
-        `/api/weather?lat=${loc.latitude}&lon=${loc.longitude}`
-      );
+      // Choose which API to use
+      const apiUrl = useMetNorwayApi
+        ? `/api/metno-weather?lat=${loc.latitude}&lon=${loc.longitude}${
+            loc.altitude ? `&altitude=${Math.round(loc.altitude)}` : ""
+          }`
+        : `/api/weather?lat=${loc.latitude}&lon=${loc.longitude}`;
+
+      const response = await fetch(apiUrl);
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to fetch weather");
       }
 
-      updateStatus(
-        `Weather for ${data.city}: ${data.description}, ${data.temp}°C`
-      );
-      setWeather(data);
-      return data;
+      let weatherInfo: WeatherData;
+
+      if (useMetNorwayApi) {
+        // Format data from MET Norway API
+        weatherInfo = {
+          location:
+            data.location ||
+            `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`,
+          city: data.location || "Unnamed location",
+          country: "", // MET Norway doesn't provide country info
+          temp: data.weather.temperature,
+          description: data.weather.symbol.replace(/_/g, " "),
+          symbol: data.weather.symbol,
+          windSpeed: data.weather.windSpeed,
+          cloudCover: data.weather.cloudCover,
+          precipitation: data.weather.precipitation,
+          creativeDescription: data.weather.description, // Creative description from OpenAI
+        };
+
+        updateStatus(
+          `Weather: ${weatherInfo.temp}°C, ${weatherInfo.description} with creative insight from AI`
+        );
+      } else {
+        // Format data from original weather API
+        weatherInfo = {
+          city: data.city || "Unknown location",
+          country: data.country || "",
+          description: data.description || "unknown conditions",
+          temp: data.temp,
+        };
+
+        updateStatus(
+          `Weather for ${weatherInfo.city}: ${weatherInfo.description}, ${weatherInfo.temp}°C`
+        );
+      }
+
+      setWeather(weatherInfo);
+      return weatherInfo;
     } catch (error: unknown) {
       // Create default weather data with unknown values
       updateStatus("Could not fetch weather data, using default values.");
@@ -143,23 +190,53 @@ export default function Home() {
     weatherData: WeatherData
   ): string => {
     // --- Customize your prompt structure here! ---
-    const generatedPrompt = `Lifestyle magazine cover photo of an outdoor scene in ${
-      weatherData.city
-    }, with people that resemble the essence of ${
-      weatherData.country
-    } in the way they dress. Add colorful tones in fabric and clothing. The clothes have clear, fashion style. Around there are street signs or signs with text that says "Dentsu" and "${weatherData.city.toUpperCase()}" printed on in bold. Easy-to-read font. The text appears as location or direction signs. One or more people are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens. The photo shows the locationduring ${
-      weatherData.description
-    } weather, with a temperature around ${
-      typeof weatherData.temp === "number"
-        ? Math.round(weatherData.temp)
-        : weatherData.temp
-    }°C. GPS coordinates: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(
-      4
-    )}. Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens. Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations. Natural outdoor lighting creating directional soft illumination. Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics. Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio. Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth. Subtle micro-contrast typical of GFX system. The text on clothing must be perfectly legible and clear.`;
+    const generatedPrompt = weatherData.creativeDescription
+      ? `Lifestyle magazine cover photo of an outdoor scene in ${
+          weatherData.city || "a beautiful location"
+        }. ${weatherData.creativeDescription} 
+        People are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens.
+        Street signs or direction signs that say "Dentsu" and "${(
+          weatherData.city || "LOCATION"
+        ).toUpperCase()}" in bold, easy-to-read font.
+        
+        GPS coordinates: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(
+          4
+        )}. 
+        Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
+        Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations.
+        Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics.
+        Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio.
+        Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth.
+        Subtle micro-contrast typical of GFX system. The text on signs must be perfectly legible and clear.`
+      : `Lifestyle magazine cover photo of an outdoor scene in ${
+          weatherData.city || "a beautiful location"
+        }, with people that resemble the essence of ${
+          weatherData.country || "the local culture"
+        } in the way they dress. Add colorful tones in fabric and clothing. The clothes have clear, fashion style. Around there are street signs or signs with text that says "Dentsu" and "${(
+          weatherData.city || "LOCATION"
+        ).toUpperCase()}" printed on in bold. Easy-to-read font. The text appears as location or direction signs. One or more people are actively engaging with their mobile phones - taking selfies, texting, or showing each other content on their screens. The photo shows the location during ${
+          weatherData.description
+        } weather, with a temperature around ${
+          typeof weatherData.temp === "number"
+            ? Math.round(weatherData.temp)
+            : weatherData.temp
+        }°C. GPS coordinates: ${loc.latitude.toFixed(
+          4
+        )}, ${loc.longitude.toFixed(
+          4
+        )}. Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens. Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations. Natural outdoor lighting creating directional soft illumination. Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics. Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio. Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth. Subtle micro-contrast typical of GFX system. The text on clothing must be perfectly legible and clear.`;
     // --- End of customization ---
 
     setPrompt(generatedPrompt);
     return generatedPrompt;
+  };
+
+  // Toggle between weather APIs
+  const handleToggleWeatherApi = () => {
+    setUseMetNorwayApi(!useMetNorwayApi);
+    updateStatus(
+      `Using ${!useMetNorwayApi ? "MET Norway" : "Original"} weather API`
+    );
   };
 
   const handleStartGeneration = async (currentPrompt: string) => {
@@ -373,6 +450,13 @@ export default function Home() {
             </svg>
           </button>
           <h1 className="text-4xl font-bold ml-4">Image Generator</h1>
+          <button
+            className="ml-auto p-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            onClick={handleToggleWeatherApi}
+            title="Toggle weather data source"
+          >
+            {useMetNorwayApi ? "Using MET Norway" : "Using OpenWeatherMap"}
+          </button>
         </div>
 
         {/* Prompt input */}

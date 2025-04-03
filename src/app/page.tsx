@@ -54,6 +54,7 @@ export default function Home() {
   const [placeholderColor, setPlaceholderColor] = useState<string>("#e0f2f1"); // Default soft teal
   const [useMetNorwayApi, setUseMetNorwayApi] = useState<boolean>(true); // Toggle between APIs
   const [selectedSubject, setSelectedSubject] = useState<SubjectType>("custom");
+  const [showCustomPrompt, setShowCustomPrompt] = useState<boolean>(false);
 
   // Use error for conditional display in the UI
   const hasError = Boolean(error);
@@ -637,21 +638,9 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Prompt input */}
-        <textarea
-          className="w-full p-4 mb-6 border border-gray-300 rounded-lg text-base resize-none"
-          rows={3}
-          placeholder="Enter a description of what you want to generate..."
-          value={prompt}
-          onChange={(e) => {
-            setPrompt(e.target.value);
-            setSelectedSubject("custom");
-          }}
-        />
-
         {/* Image preview area */}
         <div
-          className={`relative w-full aspect-square rounded-lg mb-6 overflow-hidden ${
+          className={`relative w-full aspect-square rounded-lg mb-3 overflow-hidden ${
             isLoading ? "animate-pulse" : ""
           }`}
           style={{ backgroundColor: placeholderColor }}
@@ -673,6 +662,47 @@ export default function Home() {
               </div>
             </div>
           ) : null}
+        </div>
+
+        {/* Custom Prompt Accordion */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowCustomPrompt(!showCustomPrompt)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <span className="font-medium text-gray-700">Custom Prompt</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform ${
+                showCustomPrompt ? "rotate-180" : ""
+              }`}
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          {showCustomPrompt && (
+            <div className="mt-2 transition-all">
+              <textarea
+                className="w-full p-4 border border-gray-300 rounded-lg text-base resize-none"
+                rows={4}
+                placeholder="Enter a description of what you want to generate..."
+                value={prompt}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  setSelectedSubject("custom");
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Status message - only show when there's actual status */}

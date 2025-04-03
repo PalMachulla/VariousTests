@@ -304,8 +304,18 @@ export default function Home() {
       const data = await response.json();
       const enhancedPrompt = data.prompt;
 
+      // Extract and display time of day information if available
+      if (data.meta?.timeOfDay) {
+        const timeOfDay = data.meta.timeOfDay;
+        const lighting = data.meta.lightingConditions;
+        updateStatus(
+          `Magic prompt created for ${timeOfDay.toLowerCase()} lighting (${lighting})`
+        );
+      } else {
+        updateStatus("Magic prompt created!");
+      }
+
       console.log("Enhanced prompt:", enhancedPrompt);
-      updateStatus("Magic prompt created!");
       setPrompt(enhancedPrompt);
       return enhancedPrompt;
     } catch (error) {

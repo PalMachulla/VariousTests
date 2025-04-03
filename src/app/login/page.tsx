@@ -39,28 +39,30 @@ export default function Login() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 md:p-12 lg:p-24 bg-gray-100 text-gray-800">
-      <div className="z-10 w-full max-w-md items-center font-mono text-sm">
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-600 mb-6 text-center">
-            Login Required
-          </h1>
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
+      <div className="w-full max-w-md">
+        <h1 className="text-4xl font-bold mb-8 text-center">Image Generator</h1>
 
-          <p className="mb-6 text-gray-600 text-center">
+        <div className="bg-gray-50 p-8 rounded-2xl shadow-sm border border-gray-200">
+          <h2 className="text-2xl font-semibold mb-6 text-center">
+            Login Required
+          </h2>
+
+          <p className="mb-8 text-gray-600 text-center">
             This app is password protected to prevent misuse of AI services.
           </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+            <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg text-center">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Password
               </label>
@@ -69,7 +71,7 @@ export default function Login() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                 required
               />
             </div>
@@ -77,9 +79,16 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+              className="w-full py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <span>Logging in...</span>
+                </div>
+              ) : (
+                "Login"
+              )}
             </button>
           </form>
         </div>

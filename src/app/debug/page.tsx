@@ -38,45 +38,61 @@ export default function DebugPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 md:p-12 lg:p-24 bg-gray-100 text-gray-800">
-      <div className="z-10 w-full max-w-4xl items-center font-mono text-sm">
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-600 mb-6 text-center">
-            Auth Debug Page
-          </h1>
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
+      <div className="w-full max-w-md">
+        <div className="flex items-center mb-6">
+          <button
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => window.history.back()}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-4xl font-bold ml-4">Debug Page</h1>
+        </div>
 
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Current Cookies:</h2>
-            <pre className="bg-gray-100 p-4 rounded overflow-x-auto">
-              {cookies}
-            </pre>
-          </div>
+        <div className="bg-gray-50 p-8 rounded-2xl shadow-sm border border-gray-200 mb-6">
+          <h2 className="text-2xl font-semibold mb-4">Current Cookies:</h2>
+          <pre className="bg-white p-4 rounded-lg overflow-x-auto border border-gray-200 mb-6 text-sm">
+            {cookies}
+          </pre>
 
-          <div className="flex flex-col gap-4">
+          <div className="space-y-4">
             <button
               onClick={handleSetAuthCookie}
-              className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600"
+              className="w-full py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors"
             >
               Set Auth Cookie
             </button>
 
             <button
               onClick={handleClearAuthCookie}
-              className="px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600"
+              className="w-full py-3 bg-red-500 text-white font-medium rounded-full hover:bg-red-600 transition-colors"
             >
               Clear Auth Cookie
             </button>
 
             <button
               onClick={handleGoHome}
-              className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600"
+              className="w-full py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 transition-colors"
             >
               Go to Homepage
             </button>
 
             <button
               onClick={handleGoLogin}
-              className="px-6 py-3 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600"
+              className="w-full py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 transition-colors"
             >
               Go to Login Page
             </button>

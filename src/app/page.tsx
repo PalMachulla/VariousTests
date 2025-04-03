@@ -31,9 +31,7 @@ interface ReplicatePrediction {
 }
 
 export default function Home() {
-  const [status, setStatus] = useState<string>(
-    'Ready. Click "Generate Prompt" to begin.'
-  );
+  const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<LocationData | null>(null);
@@ -42,6 +40,7 @@ export default function Home() {
   const [predictionId, setPredictionId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showFetchButton, setShowFetchButton] = useState<boolean>(false);
+  const [placeholderColor, setPlaceholderColor] = useState<string>("#e0f2f1"); // Default soft teal
 
   // Use error for conditional display in the UI
   const hasError = Boolean(error);
@@ -49,6 +48,14 @@ export default function Home() {
   // Interval timer for polling Replicate status
   const [pollingIntervalId, setPollingIntervalId] =
     useState<NodeJS.Timeout | null>(null);
+
+  // Generate random soft color for the placeholder
+  useEffect(() => {
+    // Generate a soft, pastel color
+    const hue = Math.floor(Math.random() * 360); // Random hue
+    const pastelColor = `hsl(${hue}, 70%, 90%)`;
+    setPlaceholderColor(pastelColor);
+  }, []);
 
   // Clear polling interval on component unmount or when prediction finishes/fails
   useEffect(() => {
@@ -191,9 +198,7 @@ export default function Home() {
       }
 
       if (prediction.id) {
-        updateStatus(
-          `Image generation started (ID: ${prediction.id}). Status: ${prediction.status}. Checking periodically...`
-        );
+        updateStatus(`Image generation started. Status: ${prediction.status}`);
         setPredictionId(prediction.id);
         setShowFetchButton(true); // Show the manual fetch button
         // Start polling
@@ -224,9 +229,7 @@ export default function Home() {
 
     if (!isPolling) {
       // Only show manual fetch status if not polling
-      updateStatus(
-        `Manually checking status for prediction ID: ${idToCheck}...`
-      );
+      updateStatus(`Checking status...`);
       setIsLoading(true); // Show loading state for manual fetch
     } else {
       console.log(`Polling status for ${idToCheck}...`);
@@ -265,7 +268,7 @@ export default function Home() {
         throw new Error(errorMsg);
       }
 
-      updateStatus(`Current status [${idToCheck}]: ${prediction.status}`);
+      updateStatus(`Status: ${prediction.status}`);
 
       switch (prediction.status) {
         case "succeeded":
@@ -347,85 +350,100 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-6 md:p-12 lg:p-24 bg-gray-100 text-gray-800">
-      <div className="z-10 w-full max-w-4xl items-center justify-between font-mono text-sm flex flex-col gap-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-blue-600 mb-6">
-          Context Aware Image Generator
-        </h1>
-
-        {/* Controls */}
-        <div id="controls" className="flex flex-col sm:flex-row gap-4 mb-4">
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
+      <div className="w-full max-w-md">
+        {/* Header with back button */}
+        <div className="flex items-center mb-6">
           <button
-            id="generatePromptBtn"
-            onClick={handleGenerateClick}
-            disabled={isLoading}
-            className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            onClick={() => window.history.back()}
           >
-            {isLoading && !imageUrl
-              ? "Generating..."
-              : "Generate Prompt & Start Image"}
-          </button>
-          {showFetchButton && (
-            <button
-              id="fetchImageBtn"
-              onClick={() => handleFetchResult(predictionId)} // Explicitly pass current ID for manual fetch
-              disabled={isLoading} // Disable if already loading/fetching
-              className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              {isLoading ? "Checking..." : "Check Status / Fetch Image"}
-            </button>
-          )}
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-4xl font-bold ml-4">Image Generator</h1>
         </div>
 
-        {/* Status Display */}
+        {/* Prompt input */}
+        <textarea
+          className="w-full p-4 mb-6 border border-gray-300 rounded-lg text-base resize-none"
+          rows={3}
+          placeholder="Enter a description of what you want to generate..."
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+        />
+
+        {/* Image preview area */}
         <div
-          id="status"
-          className={`mt-4 text-center p-3 rounded-md min-h-[50px] w-full max-w-lg ${
-            error ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+          className={`relative w-full aspect-square rounded-lg mb-6 overflow-hidden ${
+            isLoading ? "animate-pulse" : ""
           }`}
+          style={{ backgroundColor: placeholderColor }}
         >
-          <p>{status}</p>
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt="Generated image"
+              fill
+              sizes="(max-width: 768px) 100vw, 500px"
+              className="object-cover"
+              priority
+            />
+          ) : isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative w-16 h-16">
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-t-blue-500 rounded-full animate-spin"></div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        {/* Prompt Display */}
-        {prompt && (
+        {/* Status message - only show when there's actual status */}
+        {status && !isLoading && (
           <div
-            id="prompt-display"
-            className="mt-6 p-4 bg-white rounded-lg shadow w-full max-w-lg"
+            className={`px-4 py-2 mb-6 rounded-lg text-center ${
+              hasError ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+            }`}
           >
-            <h2 className="text-xl font-semibold mb-2 text-gray-700">
-              Generated Prompt:
-            </h2>
-            <textarea
-              id="promptText"
-              rows={5}
-              readOnly
-              value={prompt}
-              className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-sm font-mono"
-            />
+            {status}
           </div>
         )}
 
-        {/* Image Display */}
+        {/* Action buttons */}
+        <button
+          onClick={handleGenerateClick}
+          disabled={isLoading}
+          className="w-full py-3 bg-black text-white font-medium rounded-full mb-4 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          Generate
+        </button>
+
         {imageUrl && (
-          <div
-            id="image-display"
-            className="mt-6 p-4 bg-white rounded-lg shadow w-full max-w-lg flex flex-col items-center"
+          <button className="w-full py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 transition-colors">
+            Save
+          </button>
+        )}
+
+        {showFetchButton && (
+          <button
+            onClick={() => handleFetchResult(predictionId)}
+            disabled={isLoading}
+            className="w-full mt-4 py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
           >
-            <h2 className="text-xl font-semibold mb-3 text-gray-700">
-              Generated Image:
-            </h2>
-            {/* Use Next.js Image component for optimization */}
-            <Image
-              id="resultImage"
-              src={imageUrl} // The URL from Replicate
-              alt="Generated Image based on location and weather"
-              width={512} // Provide base width (adjust as needed)
-              height={512} // Provide base height (adjust as needed)
-              className="rounded-md border border-gray-300"
-              priority // Load image faster if it's important
-            />
-          </div>
+            Check Status
+          </button>
         )}
       </div>
     </main>

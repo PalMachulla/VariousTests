@@ -16,6 +16,12 @@ interface WeatherData {
   country: string;
 }
 
+// Define proper error types
+interface ApiError {
+  message: string;
+  [key: string]: unknown;
+}
+
 interface ReplicatePrediction {
   id: string;
   status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
@@ -36,6 +42,9 @@ export default function Home() {
   const [predictionId, setPredictionId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showFetchButton, setShowFetchButton] = useState<boolean>(false);
+
+  // Use error for conditional display in the UI
+  const hasError = Boolean(error);
 
   // Interval timer for polling Replicate status
   const [pollingIntervalId, setPollingIntervalId] =
@@ -108,7 +117,7 @@ export default function Home() {
       );
       setWeather(data);
       return data;
-    } catch (error) {
+    } catch (error: unknown) {
       // Create default weather data with unknown values
       updateStatus("Could not fetch weather data, using default values.");
       const defaultWeather: WeatherData = {
@@ -195,10 +204,12 @@ export default function Home() {
       } else {
         throw new Error("Replicate API did not return a prediction ID.");
       }
-    } catch (err: any) {
-      updateStatus(`Image generation error: ${err.message}`, true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      updateStatus(`Image generation error: ${errorMessage}`, true);
       setIsLoading(false);
-      console.error("Generation error:", err);
+      console.error("Generation error:", error);
     }
   };
 
@@ -296,8 +307,10 @@ export default function Home() {
           if (!isPolling) setIsLoading(false);
           setShowFetchButton(true); // Keep fetch button for manual retry
       }
-    } catch (err: any) {
-      updateStatus(err.message, true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      updateStatus(errorMessage, true);
       // Decide whether to stop polling on error
       // clearPolling(); // Uncomment to stop polling on ANY fetch error
       if (!isPolling) setIsLoading(false);
@@ -323,8 +336,10 @@ export default function Home() {
       const generatedPrompt = createAndSetPrompt(loc, weatherData);
       await handleStartGeneration(generatedPrompt);
       // No need to setIsLoading(false) here, handleStartGeneration/polling handles it
-    } catch (err: any) {
-      updateStatus(err.message, true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      updateStatus(errorMessage, true);
       setIsLoading(false); // Ensure loading stops on error
       clearPolling(); // Stop polling if setup failed
       setShowFetchButton(false);

@@ -47,10 +47,11 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json(weatherInfo);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error fetching weather:", error);
     return NextResponse.json(
-      { error: `Failed to fetch weather: ${error.message}` },
+      { error: `Failed to fetch weather: ${errorMessage}` },
       { status: 500 }
     );
   }

@@ -664,46 +664,41 @@ export default function Home() {
           ) : null}
         </div>
 
-        {/* Custom Prompt Accordion */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowCustomPrompt(!showCustomPrompt)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <span className="font-medium text-gray-700">Custom Prompt</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`transition-transform ${
-                showCustomPrompt ? "rotate-180" : ""
-              }`}
+        {/* Prompt Display Accordion - only show when a prompt is available */}
+        {prompt && (
+          <div className="mb-6">
+            <button
+              onClick={() => setShowCustomPrompt(!showCustomPrompt)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
+              <span className="font-medium text-gray-700">View Prompt</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`transition-transform ${
+                  showCustomPrompt ? "rotate-180" : ""
+                }`}
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
 
-          {showCustomPrompt && (
-            <div className="mt-2 transition-all">
-              <textarea
-                className="w-full p-4 border border-gray-300 rounded-lg text-base resize-none"
-                rows={4}
-                placeholder="Enter a description of what you want to generate..."
-                value={prompt}
-                onChange={(e) => {
-                  setPrompt(e.target.value);
-                  setSelectedSubject("custom");
-                }}
-              />
-            </div>
-          )}
-        </div>
+            {showCustomPrompt && (
+              <div className="mt-2 transition-all">
+                <div className="w-full p-4 border border-gray-300 rounded-lg text-base bg-gray-50 max-h-60 overflow-y-auto whitespace-pre-wrap">
+                  {prompt}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Status message - only show when there's actual status */}
         {status && !isLoading && (

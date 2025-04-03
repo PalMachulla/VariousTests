@@ -542,41 +542,16 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
       <div className="w-full max-w-md">
-        {/* Header with back button */}
-        <div className="flex items-center mb-6">
-          <button
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            onClick={() => window.history.back()}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-4xl font-bold ml-4">Image Generator</h1>
-          <button
-            className="ml-auto p-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            onClick={handleToggleWeatherApi}
-            title="Toggle weather data source"
-          >
-            {useMetNorwayApi ? "Using MET Norway" : "Using OpenWeatherMap"}
-          </button>
+        {/* Header - simplified without back button and API toggle */}
+        <div className="flex items-center justify-center mb-6">
+          <h1 className="text-4xl font-bold">Image Generator</h1>
         </div>
 
-        {/* Subject type selection buttons */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        {/* Subject type selection buttons - smaller, single-line layout */}
+        <div className="flex justify-center gap-3 mb-6">
           <button
             onClick={() => handleSubjectSelect("portrait")}
-            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
               selectedSubject === "portrait"
                 ? "border-black bg-black text-white"
                 : "border-gray-300 hover:bg-gray-100"
@@ -585,15 +560,15 @@ export default function Home() {
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mb-2"
+              className="mr-2"
             >
               <circle cx="12" cy="8" r="5" />
               <path d="M20 21a8 8 0 0 0-16 0" />
@@ -603,7 +578,7 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("humans")}
-            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
               selectedSubject === "humans"
                 ? "border-black bg-black text-white"
                 : "border-gray-300 hover:bg-gray-100"
@@ -612,15 +587,15 @@ export default function Home() {
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mb-2"
+              className="mr-2"
             >
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
@@ -632,7 +607,7 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("nature")}
-            className={`flex flex-col items-center justify-center p-4 rounded-full border-2 transition-all ${
+            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
               selectedSubject === "nature"
                 ? "border-black bg-black text-white"
                 : "border-gray-300 hover:bg-gray-100"
@@ -641,15 +616,15 @@ export default function Home() {
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="mb-2"
+              className="mr-2"
             >
               <path d="M21 8a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
               <path d="M21 12c0 4.418-3.582 8-8 8s-8-3.582-8-8" />

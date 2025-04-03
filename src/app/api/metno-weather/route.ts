@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     // Get location name from coordinates directly using the imported function
     const locationInfo = await getLocationFromCoordinates(lat, lon);
     const locationName = locationInfo.best_name;
-    console.log(`Location identified as: ${locationName}`);
+    const country = locationInfo.country || "Unknown country";
+    console.log(`Location identified as: ${locationName}, ${country}`);
 
     try {
       // Construct the MET Norway API URL
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
             },
             {
               role: "user",
-              content: `Create a vivid, short description (50-60 words) of the current weather in ${locationName}. Temperature: ${
+              content: `Create a vivid, short description (50-60 words) of the current weather in ${locationName}, ${country}. Temperature: ${
                 weather.temperature
               }°C, Wind: ${weather.windSpeed} m/s, Cloud cover: ${
                 weather.cloudCover
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
         console.log("Generated creative description:", creativeDescription);
       } catch (error: unknown) {
         console.error("Error generating creative description:", error);
-        creativeDescription = `Weather in ${locationName}: ${
+        creativeDescription = `Weather in ${locationName}, ${country}: ${
           weather.temperature
         }°C, ${weather.symbol.replace(/_/g, " ")}.`;
       }
@@ -120,10 +121,11 @@ export async function GET(request: NextRequest) {
       // Add the creative description to the weather data
       weather.description = creativeDescription;
 
-      // Return the processed weather data
+      // Return the processed weather data with location info
       return NextResponse.json({
         success: true,
         location: locationName,
+        country: country,
         weather,
       });
     } catch (weatherError: unknown) {
@@ -143,7 +145,7 @@ export async function GET(request: NextRequest) {
             },
             {
               role: "user",
-              content: `Create a vivid, short description (50-60 words) of typical pleasant weather conditions in ${locationName}. Focus on how this creates appealing lighting conditions, atmospheric effects, and visual elements that would make for good photography.`,
+              content: `Create a vivid, short description (50-60 words) of typical pleasant weather conditions in ${locationName}, ${country}. Focus on how this creates appealing lighting conditions, atmospheric effects, and visual elements that would make for good photography.`,
             },
           ],
           temperature: 0.7,
@@ -154,13 +156,14 @@ export async function GET(request: NextRequest) {
         console.log("Generated fallback description:", fallbackDescription);
       } catch (error: unknown) {
         console.error("Error generating fallback description:", error);
-        fallbackDescription = `A pleasant day in ${locationName} with good conditions for photography.`;
+        fallbackDescription = `A pleasant day in ${locationName}, ${country} with good conditions for photography.`;
       }
 
       // Return a response with the location name and fallback weather
       return NextResponse.json({
         success: true,
         location: locationName,
+        country: country,
         weather: {
           temperature: 20, // A reasonable default temperature
           description: "pleasant conditions",
@@ -180,6 +183,7 @@ export async function GET(request: NextRequest) {
         error: `Failed to fetch location and weather data: ${errorMessage}`,
         // Still try to provide a valid response structure even in error cases
         location: "Unknown location",
+        country: "Unknown country",
         weather: {
           temperature: 20,
           description: "unknown conditions",

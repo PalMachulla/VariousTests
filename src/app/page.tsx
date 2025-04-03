@@ -184,7 +184,7 @@ export default function Home() {
             data.location ||
             loc.locationName || // Use geocoded location name if available
             "Unnamed location",
-          country: "", // MET Norway doesn't provide country info
+          country: data.country || "", // Now getting country from the updated API
           temp: data.weather.temperature,
           description: data.weather.symbol.replace(/_/g, " "),
           symbol: data.weather.symbol,
@@ -195,7 +195,7 @@ export default function Home() {
         };
 
         updateStatus(
-          `Weather for ${weatherInfo.city}: ${weatherInfo.temp}°C, ${weatherInfo.description} with creative insight from AI`
+          `Weather for ${weatherInfo.city}, ${weatherInfo.country}: ${weatherInfo.temp}°C, ${weatherInfo.description} with creative insight from AI`
         );
       } else {
         // Format data from original weather API
@@ -210,7 +210,7 @@ export default function Home() {
         };
 
         updateStatus(
-          `Weather for ${weatherInfo.city}: ${weatherInfo.description}, ${weatherInfo.temp}°C`
+          `Weather for ${weatherInfo.city}, ${weatherInfo.country}: ${weatherInfo.description}, ${weatherInfo.temp}°C`
         );
       }
 
@@ -221,7 +221,7 @@ export default function Home() {
       updateStatus("Could not fetch weather data, using default values.");
       const defaultWeather: WeatherData = {
         city: loc.locationName || "Unknown location", // Use geocoded location name if available
-        country: "",
+        country: "Unknown country",
         description: "unknown conditions",
         temp: "unknown",
       };

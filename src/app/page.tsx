@@ -582,6 +582,40 @@ export default function Home() {
     }
   };
 
+  // Handle ReRoll button click - generate new image with same location and weather
+  const handleReRoll = async () => {
+    setIsLoading(true);
+    setError(null);
+    setImageUrl(null);
+    setPredictionId(null);
+    setShowFetchButton(false);
+    clearPolling();
+
+    try {
+      // We already have location and weather data, so just create a new prompt
+      if (location && weather) {
+        const generatedPrompt = await createAndSetPrompt(location, weather);
+        await handleStartGeneration(generatedPrompt);
+      } else {
+        // If we somehow don't have location/weather, get it again
+        handleGenerateClick();
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      updateStatus(errorMessage, true);
+      setIsLoading(false);
+      clearPolling();
+      setShowFetchButton(false);
+    }
+  };
+
+  // Handle Set New Location button click - clear the image and show map
+  const handleSetNewLocation = () => {
+    setImageUrl(null);
+    // Keep the existing location data but allow user to change it on the map
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
       <div className="w-full max-w-md">
@@ -714,71 +748,41 @@ export default function Home() {
           )}
         </div>
 
-        {/* Prompt Display Accordion - only show when a prompt is available */}
-        {prompt && (
-          <div className="mb-6">
-            <button
-              onClick={() => setShowCustomPrompt(!showCustomPrompt)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <span className="font-medium text-gray-700">View Prompt</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`transition-transform ${
-                  showCustomPrompt ? "rotate-180" : ""
-                }`}
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
+        {/* Remove Prompt Display Accordion */}
 
-            {showCustomPrompt && (
-              <div className="mt-2 transition-all">
-                <div className="w-full p-4 border border-gray-300 rounded-lg text-base bg-gray-50 max-h-60 overflow-y-auto whitespace-pre-wrap">
-                  {prompt}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Status message - only show when there's actual status */}
-        {status && !isLoading && (
-          <div
-            className={`px-4 py-2 mb-6 rounded-lg text-center ${
-              hasError ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {status}
-          </div>
-        )}
+        {/* Remove Status message */}
 
         {/* Action buttons */}
-        <button
-          onClick={handleGenerateClick}
-          disabled={isLoading}
-          className="w-full py-3 bg-black text-white font-medium rounded-full mb-4 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          {location?.isManuallySet
-            ? "Generate from Map Location"
-            : "Generate from My Location"}
-        </button>
-
-        {imageUrl && (
-          <button className="w-full py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 transition-colors">
-            Save
+        {!imageUrl ? (
+          <button
+            onClick={handleGenerateClick}
+            disabled={isLoading}
+            className="w-full py-3 bg-black text-white font-medium rounded-full mb-4 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {location?.isManuallySet
+              ? "Generate from Map Location"
+              : "Generate from My Location"}
           </button>
+        ) : (
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={handleReRoll}
+              disabled={isLoading}
+              className="w-1/2 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              ReRoll
+            </button>
+            <button
+              onClick={handleSetNewLocation}
+              disabled={isLoading}
+              className="w-1/2 py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+            >
+              Set New Location
+            </button>
+          </div>
         )}
 
-        {showFetchButton && (
+        {showFetchButton && !imageUrl && (
           <button
             onClick={() => handleFetchResult(predictionId)}
             disabled={isLoading}

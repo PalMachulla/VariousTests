@@ -3,12 +3,20 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image"; // Use Next.js Image component
+import dynamic from "next/dynamic";
+
+// Dynamically import the map component to avoid SSR issues with Leaflet
+const LocationMap = dynamic(() => import("../components/LocationMap"), {
+  ssr: false,
+});
 
 interface LocationData {
   latitude: number;
   longitude: number;
   altitude?: number;
   locationName?: string; // Added for storing the location name from geocoding
+  // Flag to indicate if location was manually selected on map
+  isManuallySet?: boolean;
 }
 
 interface WeatherData {
@@ -93,7 +101,41 @@ export default function Home() {
     setError(isError ? message : null);
   };
 
+  // Handle map location changes
+  const handleMapLocationChange = (lat: number, lng: number) => {
+    if (isLoading) return; // Don't change location while loading
+
+    // Update location with manually set coordinates
+    setLocation((prevLocation) => {
+      if (!prevLocation)
+        return { latitude: lat, longitude: lng, isManuallySet: true };
+
+      // Only update if coordinates actually changed
+      if (prevLocation.latitude === lat && prevLocation.longitude === lng) {
+        return prevLocation;
+      }
+
+      return {
+        ...prevLocation,
+        latitude: lat,
+        longitude: lng,
+        isManuallySet: true,
+        // Clear previous location name when manually changing location
+        locationName: undefined,
+      };
+    });
+
+    // If we already moved the map and have set coordinates, update the status
+    updateStatus(`Location set to: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+  };
+
+  // Modified to use either detected or manually set location
   const handleGetLocation = (): Promise<LocationData> => {
+    // If we already have a manually set location, use it
+    if (location && location.isManuallySet) {
+      return Promise.resolve(location);
+    }
+
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         reject(new Error("Geolocation is not supported by your browser."));
@@ -638,14 +680,10 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Image preview area */}
-        <div
-          className={`relative w-full aspect-square rounded-lg mb-3 overflow-hidden ${
-            isLoading ? "animate-pulse" : ""
-          }`}
-          style={{ backgroundColor: placeholderColor }}
-        >
+        {/* Image preview or Map */}
+        <div className="relative w-full aspect-square rounded-lg mb-3 overflow-hidden">
           {imageUrl ? (
+            // Show generated image when available
             <Image
               src={imageUrl}
               alt="Generated image"
@@ -654,14 +692,26 @@ export default function Home() {
               className="object-cover"
               priority
             />
-          ) : isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-16 h-16">
-                <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-full h-full border-4 border-t-blue-500 rounded-full animate-spin"></div>
-              </div>
+          ) : (
+            // Show map when no image is generated
+            <div
+              className={`h-full w-full ${isLoading ? "animate-pulse" : ""}`}
+            >
+              <LocationMap
+                initialLat={location?.latitude || 59.5225}
+                initialLng={location?.longitude || 10.6866}
+                onLocationChange={handleMapLocationChange}
+              />
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                </div>
+              )}
             </div>
-          ) : null}
+          )}
         </div>
 
         {/* Prompt Display Accordion - only show when a prompt is available */}
@@ -717,7 +767,9 @@ export default function Home() {
           disabled={isLoading}
           className="w-full py-3 bg-black text-white font-medium rounded-full mb-4 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
         >
-          Generate
+          {location?.isManuallySet
+            ? "Generate from Map Location"
+            : "Generate from My Location"}
         </button>
 
         {imageUrl && (

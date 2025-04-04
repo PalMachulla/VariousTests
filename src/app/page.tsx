@@ -303,9 +303,9 @@ export default function Home() {
   const getSubjectDescription = (type: SubjectType): string => {
     switch (type) {
       case "portrait":
-        return "A striking portrait of a local person with authentic facial expressions and natural lighting. The face is captured with striking detail, showing the character and personality in their eyes.";
+        return "A striking portrait of a local person with authentic facial expressions and natural lighting. The face is captured with striking detail, showing the character and personality in their eyes. The person should be actively engaging with their mobile phone - either taking a selfie, checking messages, scrolling social media, or looking at the screen with interest.";
       case "humans":
-        return "A vibrant scene of people interacting and engaging with each other in a social setting. Small groups facing the camera or angled to show their faces and expressions. People are shown in conversations, laughing, and connecting in authentic ways. Focus on capturing facial expressions, emotions, and the community atmosphere, avoiding shots from behind or of people walking away.";
+        return "A vibrant scene of people interacting and engaging with each other in a social setting. Small groups facing the camera or angled to show their faces and expressions. People are shown in conversations, laughing, and connecting in authentic ways. At least some people should be using their mobile phones - taking group photos, showing each other content on their screens, comparing photos, or using navigation apps. Focus on capturing facial expressions, emotions, and the community atmosphere, avoiding shots from behind or of people walking away.";
       case "nature":
         return "The local landscape dominates the scene, showcasing the environmental features, scenery, and natural elements characteristic of the region. No human presence, focusing entirely on the raw beauty of the location.";
       case "custom":

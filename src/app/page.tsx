@@ -322,23 +322,24 @@ export default function Home() {
     // Start with a fallback prompt in case the enhancement API fails
     const subjectDescription = getSubjectDescription(selectedSubject);
 
-    const fallbackPrompt = `Lifestyle magazine cover photo of an outdoor scene in ${
-      weatherData.city || "a beautiful location"
-    }, ${weatherData.country || "unknown country"}. ${
-      weatherData.creativeDescription || ""
-    } 
-    ${subjectDescription}
-    Street signs or direction signs that say "Dentsu" and "${(
+    const fallbackPrompt = `Professional photo in ${
+      weatherData.city || "a location"
+    }, ${weatherData.country || ""}. ${weatherData.description || ""}, ${
+      weatherData.temp
+    }°C.
+
+${subjectDescription}
+
+Important: Subject MUST be using a mobile phone prominently in the scene.
+
+Visible street sign or direction sign showing "Dentsu" and "${(
       weatherData.city || "LOCATION"
-    ).toUpperCase()}" in bold, easy-to-read font.
-    
-    GPS coordinates: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}. 
-    Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
-    Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations.
-    Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics.
-    Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio.
-    Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth.
-    Subtle micro-contrast typical of GFX system. The text on signs must be perfectly legible and clear.`;
+    ).toUpperCase()}".
+
+Style: Fujifilm GFX 50S medium format camera, natural color science, exceptional detail.
+Technical: f/8, 1/250s, ISO 400, 4:3 ratio, sharp subject with subtle background blur.
+
+GPS: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}.`;
 
     updateStatus("Creating magic prompt...");
 

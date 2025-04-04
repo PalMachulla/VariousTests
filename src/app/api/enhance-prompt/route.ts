@@ -1,54 +1,92 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { Configuration, OpenAIApi } from "openai-edge";
 
-// Helper function to get the current time of day
-function getTimeOfDay(): string {
-  const hour = new Date().getHours();
+// Configure OpenAI API
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
-  if (hour >= 5 && hour < 8) return "Early morning";
+// Helper function to make GPT API calls
+async function callGPT(content: string): Promise<any> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not set");
+  }
+
+  try {
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a professional image prompt engineer. Create concise, focused prompts that work well with AI image generators. Keep prompts direct and actionable, focusing on visual elements.",
+        },
+        { role: "user", content },
+      ],
+      temperature: 0.7,
+      max_tokens: 600,
+    });
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error: any) {
+    console.error("Error calling OpenAI API:", error);
+    throw new Error(
+      `Failed to generate enhanced prompt: ${error.message || "Unknown error"}`
+    );
+  }
+}
+
+// Time of day detection based on time and location
+function getTimeOfDay(localTime: Date): string {
+  const hour = localTime.getHours();
+
+  if (hour >= 5 && hour < 8) return "Early Morning";
   if (hour >= 8 && hour < 12) return "Morning";
   if (hour >= 12 && hour < 14) return "Midday";
   if (hour >= 14 && hour < 17) return "Afternoon";
   if (hour >= 17 && hour < 20) return "Evening";
-  if (hour >= 20 && hour < 23) return "Night";
-  return "Late night";
+  if (hour >= 20 && hour < 22) return "Dusk";
+  return "Night";
 }
 
-// Helper function to get lighting description based on time of day and weather
-function getLightingDescription(timeOfDay: string, cloudCover: number): string {
-  const cloudy = cloudCover > 50;
+// Determine lighting conditions based on time of day and weather
+function getLightingConditions(timeOfDay: string, weather: any): string {
+  const cloudCover = weather.cloudCover || 0;
+  const isOvercast = cloudCover > 75;
+  const isCloudy = cloudCover > 40 && cloudCover <= 75;
+  const isClear = cloudCover <= 40;
 
   switch (timeOfDay) {
-    case "Early morning":
-      return cloudy
-        ? "diffused dawn light through clouds"
-        : "warm golden sunrise light";
+    case "Early Morning":
+      if (isOvercast) return "Soft, diffused dawn light through clouds";
+      return "Golden dawn light, long shadows";
     case "Morning":
-      return cloudy
-        ? "soft diffused morning light"
-        : "bright morning sunlight with long shadows";
+      if (isOvercast) return "Soft, even morning light";
+      if (isCloudy) return "Partially diffused morning light with some shadows";
+      return "Clear, directional morning light with defined shadows";
     case "Midday":
-      return cloudy
-        ? "even, diffused daylight"
-        : "harsh direct overhead sunlight";
+      if (isOvercast) return "Flat, evenly diffused light";
+      if (isCloudy) return "Partially diffused midday light";
+      return "Harsh, direct overhead sunlight with strong shadows";
     case "Afternoon":
-      return cloudy
-        ? "soft even light through cloud cover"
-        : "warm directional sunlight";
+      if (isOvercast) return "Soft, even afternoon light";
+      if (isCloudy) return "Partially diffused warm afternoon light";
+      return "Warm directional afternoon light with medium-length shadows";
     case "Evening":
-      return cloudy
-        ? "muted twilight ambience"
-        : "golden hour light with warm tones";
+      if (isOvercast) return "Subdued, even evening light";
+      if (isCloudy) return "Partially diffused golden hour light";
+      return "Golden hour light with long, warm shadows";
+    case "Dusk":
+      if (isOvercast) return "Dim, even blue hour light";
+      return "Deep blue hour light with fading warm tones";
     case "Night":
-      return cloudy
-        ? "ambient urban light reflecting off cloud cover"
-        : "clear night with moonlight and city lights";
-    case "Late night":
-      return cloudy
-        ? "minimal ambient light with cloud cover"
-        : "dark setting with subtle artificial lighting";
+      return weather.description?.includes("clear")
+        ? "Moon and starlight with deep shadows"
+        : "Low ambient night light";
     default:
-      return "natural lighting";
+      return "Natural daylight";
   }
 }
 
@@ -80,120 +118,84 @@ function getSubjectSpecificInstructions(subject: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Parse request body
+  let requestData;
   try {
-    const { location, country, weather, subject, coordinates, basePrompt } =
-      await request.json();
-
-    if (!location || !weather || !subject) {
-      return NextResponse.json(
-        { error: "Missing required parameters" },
-        { status: 400 }
-      );
-    }
-
-    // Get time of day and lighting information
-    const timeOfDay = getTimeOfDay();
-    const lightingConditions = getLightingDescription(
-      timeOfDay,
-      weather.cloudCover || 0
+    requestData = await request.json();
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
     );
+  }
 
-    // Get subject-specific instructions
-    const subjectInstructions = getSubjectSpecificInstructions(subject);
+  const { location, country, weather, subject, coordinates, basePrompt } =
+    requestData;
 
-    // Preserve the Fujifilm style requirements
-    const fujifilmStyle = `Style: Shot on Fujifilm GFX 50S medium format camera with GF 120mm F4 R LM OIS WR Macro lens.
-    Fujifilm's signature color science with natural skin tone reproduction. Medium format sensor rendering with exceptional detail and subtle tonal gradations.
-    Technical settings: f/14 for deep focus across frame, 1/500 sec shutter speed for crisp detail, ISO 640 maintaining clean image quality with medium format noise characteristics.
-    Fujifilm's characteristic color rendition emphasizing warm tones while maintaining highlight detail. 4:3 medium format aspect ratio.
-    Gentle falloff in corners typical of GF lens lineup. Sharp detail retention with medium format depth.
-    Subtle micro-contrast typical of GFX system. The text on signs must be perfectly legible and clear.`;
+  if (!location || !weather || !subject) {
+    return NextResponse.json(
+      {
+        error:
+          "Missing required parameters: location, weather, and subject are required",
+      },
+      { status: 400 }
+    );
+  }
 
-    // OpenAI setup
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  try {
+    // Get current time at the specified location
+    const localTime = new Date();
+    // In a real app, you might adjust for timezone based on coordinates
 
-    // Create a detailed prompt for OpenAI
-    const openaiPrompt = `
-    Create a detailed photography prompt for an image taken in ${location}, ${country} during ${timeOfDay.toLowerCase()} with ${lightingConditions}.
-    
-    Current weather conditions:
-    - Temperature: ${weather.temp}°C
-    - Weather description: ${weather.description}
-    - Cloud cover: ${weather.cloudCover || "unknown"}%
-    - Wind speed: ${weather.windSpeed || "light"} m/s
-    
-    The image should feature ${
-      subject === "portrait"
-        ? "a portrait of a local person"
-        : subject === "humans"
-        ? "people engaged in social activities and interactions"
-        : "a natural landscape scene"
-    } that reflects:
-    
-    1. The local environment and ${timeOfDay.toLowerCase()} lighting conditions (${lightingConditions})
-    2. Weather-appropriate clothing and activities (e.g., ${
-      weather.temp > 25
-        ? "light summer clothes, perhaps with sunglasses and sun protection"
-        : weather.temp > 15
-        ? "comfortable light layers suited for mild conditions"
-        : weather.temp > 5
-        ? "jackets and light cold-weather gear"
-        : "heavy winter clothing, scarves, gloves, etc."
-    })
-    3. Cultural elements specific to ${country}
-    4. Authentic details that would be found in ${location}
-    
-    Include "Dentsu" and "${location.toUpperCase()}" text visible on signs or in the environment - these must be clearly readable.
-    
-    GPS coordinates: ${coordinates.latitude.toFixed(
-      4
-    )}, ${coordinates.longitude.toFixed(4)}
-    
-    ${subjectInstructions}
-    
-    The prompt should be detailed and vivid, focusing on the scene, environment, lighting, and people's appearance/activities if applicable. DO NOT include any technical camera settings in your prompt.
-    `;
+    // Determine time of day and lighting conditions
+    const timeOfDay = getTimeOfDay(localTime);
+    const lightingConditions = getLightingConditions(timeOfDay, weather);
 
-    // Generate an enhanced prompt with OpenAI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a photography expert and prompt engineer who creates detailed, vivid descriptions for image generation.",
-        },
-        {
-          role: "user",
-          content: openaiPrompt,
-        },
-      ],
-      temperature: 0.8,
-      max_tokens: 500,
-    });
+    // Build a detailed context prompt for GPT
+    const promptEngineering = `
+Create a concise, compelling image generation prompt (max 200 words) for a photo in ${location}, ${
+      country || ""
+    }.
 
-    const enhancedDescription = completion.choices[0].message.content;
+Location details:
+- Place: ${location}, ${country || ""}
+- Weather: ${weather.description || "unknown"}, ${weather.temp || ""}°C
+- Time of day: ${timeOfDay}
+- Lighting: ${lightingConditions}
+- Weather insight: ${weather.creativeDescription || ""}
 
-    // Combine the AI-generated prompt with technical requirements
-    const finalPrompt = `${enhancedDescription}\n\n${fujifilmStyle}`;
+Subject: ${subject} who MUST be actively using a mobile phone (taking photos, checking phone, showing screen to others, etc.)
+
+IMPORTANT GUIDELINES:
+1. KEEP IT CONCISE - no more than 200 words total
+2. Focus on VISUAL elements only
+3. MOBILE PHONE must be prominently featured and being actively used
+4. Include a visible sign with "Dentsu" and "${location.toUpperCase()}"
+5. Maintain a professional photography style (Fujifilm medium format camera aesthetic)
+6. Specify mood, composition, focal length, lighting, and key visual elements
+7. Don't use words like "prompt" or "image"
+
+Base your response on this prompt structure but improve it:
+${basePrompt}
+`;
+
+    // Call GPT to generate an enhanced prompt
+    const enhancedPromptText = await callGPT(promptEngineering);
 
     // Return the enhanced prompt along with metadata
     return NextResponse.json({
-      prompt: finalPrompt,
+      prompt: enhancedPromptText,
       meta: {
         timeOfDay,
         lightingConditions,
         location,
-        country,
-        subject,
+        coordinates,
       },
     });
-  } catch (error) {
-    console.error("Error generating enhanced prompt:", error);
+  } catch (error: any) {
+    console.error("Error in /api/enhance-prompt:", error);
     return NextResponse.json(
-      { error: "Failed to generate enhanced prompt" },
+      { error: error.message || "Failed to generate enhanced prompt" },
       { status: 500 }
     );
   }

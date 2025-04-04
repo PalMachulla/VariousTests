@@ -617,21 +617,23 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-white text-gray-900">
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#1E1E1E] text-white">
       <div className="w-full max-w-md">
-        {/* Header - simplified without back button and API toggle */}
-        <div className="flex items-center justify-center mb-6">
-          <h1 className="text-4xl font-bold">Image Generator</h1>
+        {/* Header with new vibrant styling */}
+        <div className="flex items-center justify-center mb-8">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#b494ff] to-[#ffee00] tracking-tight">
+            Image Generator
+          </h1>
         </div>
 
-        {/* Subject type selection buttons - smaller, single-line layout */}
-        <div className="flex justify-center gap-3 mb-6">
+        {/* Subject type selection buttons - updated with vibrant colors */}
+        <div className="flex justify-center gap-4 mb-8">
           <button
             onClick={() => handleSubjectSelect("portrait")}
-            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
+            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
               selectedSubject === "portrait"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-100"
+                ? "border-[#ffee00] bg-[#ffee00] text-black"
+                : "border-[#b494ff] hover:bg-[#b494ff]/20"
             }`}
             title="Generate portrait image"
           >
@@ -655,10 +657,10 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("humans")}
-            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
+            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
               selectedSubject === "humans"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-100"
+                ? "border-[#ffee00] bg-[#ffee00] text-black"
+                : "border-[#b494ff] hover:bg-[#b494ff]/20"
             }`}
             title="Generate image with people"
           >
@@ -684,10 +686,10 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("nature")}
-            className={`flex items-center px-4 py-2 rounded-full border transition-all ${
+            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
               selectedSubject === "nature"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 hover:bg-gray-100"
+                ? "border-[#ffee00] bg-[#ffee00] text-black"
+                : "border-[#b494ff] hover:bg-[#b494ff]/20"
             }`}
             title="Generate landscape or scenery image"
           >
@@ -714,8 +716,8 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Image preview or Map */}
-        <div className="relative w-full aspect-square rounded-lg mb-3 overflow-hidden">
+        {/* Image preview or Map with enhanced styling */}
+        <div className="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden border-4 border-[#b494ff] shadow-lg shadow-[#b494ff]/20">
           {imageUrl ? (
             // Show generated image when available
             <Image
@@ -737,10 +739,10 @@ export default function Home() {
                 onLocationChange={handleMapLocationChange}
               />
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60">
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
                   <div className="relative w-16 h-16">
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-gray-200 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-blue-500 rounded-full animate-spin"></div>
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-[#b494ff]/30 rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-[#ffee00] rounded-full animate-spin"></div>
                   </div>
                 </div>
               )}
@@ -748,16 +750,12 @@ export default function Home() {
           )}
         </div>
 
-        {/* Remove Prompt Display Accordion */}
-
-        {/* Remove Status message */}
-
         {/* Action buttons */}
         {!imageUrl ? (
           <button
             onClick={handleGenerateClick}
             disabled={isLoading}
-            className="w-full py-3 bg-black text-white font-medium rounded-full mb-4 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-4 bg-[#ffee00] text-black font-bold rounded-xl mb-4 hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
           >
             {location?.isManuallySet
               ? "Generate from Map Location"
@@ -768,14 +766,14 @@ export default function Home() {
             <button
               onClick={handleReRoll}
               disabled={isLoading}
-              className="w-1/2 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="w-1/2 py-4 bg-[#ffee00] text-black font-bold rounded-xl hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
             >
               ReRoll
             </button>
             <button
               onClick={handleSetNewLocation}
               disabled={isLoading}
-              className="w-1/2 py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+              className="w-1/2 py-4 border-2 border-[#b494ff] text-white font-bold rounded-xl hover:bg-[#b494ff]/20 disabled:bg-gray-800 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
             >
               Set New Location
             </button>
@@ -786,7 +784,7 @@ export default function Home() {
           <button
             onClick={() => handleFetchResult(predictionId)}
             disabled={isLoading}
-            className="w-full mt-4 py-3 border-2 border-gray-300 text-black font-medium rounded-full hover:bg-gray-100 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+            className="w-full mt-4 py-3 border-2 border-[#b494ff] text-white font-medium rounded-xl hover:bg-[#b494ff]/20 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
           >
             Check Status
           </button>

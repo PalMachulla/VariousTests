@@ -61,7 +61,8 @@ export default function Home() {
   const [showFetchButton, setShowFetchButton] = useState<boolean>(false);
   const [placeholderColor, setPlaceholderColor] = useState<string>("#e0f2f1"); // Default soft teal
   const [useMetNorwayApi, setUseMetNorwayApi] = useState<boolean>(true); // Toggle between APIs
-  const [selectedSubject, setSelectedSubject] = useState<SubjectType>("custom");
+  const [selectedSubject, setSelectedSubject] =
+    useState<SubjectType>("portrait");
   const [showCustomPrompt, setShowCustomPrompt] = useState<boolean>(false);
 
   // Use error for conditional display in the UI
@@ -626,11 +627,11 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Subject type selection buttons - updated with vibrant colors */}
+        {/* Subject type selection buttons - updated with vibrant colors and fully rounded */}
         <div className="flex justify-center gap-4 mb-8">
           <button
             onClick={() => handleSubjectSelect("portrait")}
-            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
+            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
               selectedSubject === "portrait"
                 ? "border-[#ffee00] bg-[#ffee00] text-black"
                 : "border-[#b494ff] hover:bg-[#b494ff]/20"
@@ -657,7 +658,7 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("humans")}
-            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
+            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
               selectedSubject === "humans"
                 ? "border-[#ffee00] bg-[#ffee00] text-black"
                 : "border-[#b494ff] hover:bg-[#b494ff]/20"
@@ -686,7 +687,7 @@ export default function Home() {
 
           <button
             onClick={() => handleSubjectSelect("nature")}
-            className={`flex items-center px-4 py-3 rounded-xl border-2 transition-all ${
+            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
               selectedSubject === "nature"
                 ? "border-[#ffee00] bg-[#ffee00] text-black"
                 : "border-[#b494ff] hover:bg-[#b494ff]/20"

@@ -10,6 +10,11 @@ const LocationMap = dynamic(() => import("../components/LocationMap"), {
   ssr: false,
 });
 
+// Import the login screen
+const LoginScreen = dynamic(() => import("../components/LoginScreen"), {
+  ssr: false,
+});
+
 interface LocationData {
   latitude: number;
   longitude: number;
@@ -50,6 +55,7 @@ interface ReplicatePrediction {
 type SubjectType = "portrait" | "humans" | "nature" | "custom";
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -64,6 +70,25 @@ export default function Home() {
   const [selectedSubject, setSelectedSubject] =
     useState<SubjectType>("portrait");
   const [showCustomPrompt, setShowCustomPrompt] = useState<boolean>(false);
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const authStatus = localStorage.getItem("isAuthenticated");
+    if (authStatus === "true") {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Handle successful login
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  // Handle logout (optional)
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    setIsAuthenticated(false);
+  };
 
   // Use error for conditional display in the UI
   const hasError = Boolean(error);
@@ -618,179 +643,197 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#1E1E1E] text-white">
-      <div className="w-full max-w-md">
-        {/* Header with new vibrant styling */}
-        <div className="flex items-center justify-center mb-8">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#b494ff] to-[#ffee00] tracking-tight">
-            Image Generator
-          </h1>
-        </div>
+    <>
+      {!isAuthenticated ? (
+        <LoginScreen onLogin={handleLogin} />
+      ) : (
+        <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-[#1E1E1E] text-white">
+          <div className="w-full max-w-md">
+            {/* Header with new vibrant styling */}
+            <div className="flex items-center justify-center mb-8">
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#b494ff] to-[#ffee00] tracking-tight">
+                Image Generator
+              </h1>
+            </div>
 
-        {/* Subject type selection buttons - updated with vibrant colors and fully rounded */}
-        <div className="flex justify-center gap-4 mb-8">
-          <button
-            onClick={() => handleSubjectSelect("portrait")}
-            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
-              selectedSubject === "portrait"
-                ? "border-[#ffee00] bg-[#ffee00] text-black"
-                : "border-[#b494ff] hover:bg-[#b494ff]/20"
-            }`}
-            title="Generate portrait image"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <circle cx="12" cy="8" r="5" />
-              <path d="M20 21a8 8 0 0 0-16 0" />
-            </svg>
-            <span className="text-sm font-medium">Portrait</span>
-          </button>
+            {/* Subject type selection buttons - updated with vibrant colors and fully rounded */}
+            <div className="flex justify-center gap-4 mb-8">
+              <button
+                onClick={() => handleSubjectSelect("portrait")}
+                className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
+                  selectedSubject === "portrait"
+                    ? "border-[#ffee00] bg-[#ffee00] text-black"
+                    : "border-[#b494ff] hover:bg-[#b494ff]/20"
+                }`}
+                title="Generate portrait image"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <circle cx="12" cy="8" r="5" />
+                  <path d="M20 21a8 8 0 0 0-16 0" />
+                </svg>
+                <span className="text-sm font-medium">Portrait</span>
+              </button>
 
-          <button
-            onClick={() => handleSubjectSelect("humans")}
-            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
-              selectedSubject === "humans"
-                ? "border-[#ffee00] bg-[#ffee00] text-black"
-                : "border-[#b494ff] hover:bg-[#b494ff]/20"
-            }`}
-            title="Generate image with people"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <span className="text-sm font-medium">Humans</span>
-          </button>
+              <button
+                onClick={() => handleSubjectSelect("humans")}
+                className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
+                  selectedSubject === "humans"
+                    ? "border-[#ffee00] bg-[#ffee00] text-black"
+                    : "border-[#b494ff] hover:bg-[#b494ff]/20"
+                }`}
+                title="Generate image with people"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span className="text-sm font-medium">Humans</span>
+              </button>
 
-          <button
-            onClick={() => handleSubjectSelect("nature")}
-            className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
-              selectedSubject === "nature"
-                ? "border-[#ffee00] bg-[#ffee00] text-black"
-                : "border-[#b494ff] hover:bg-[#b494ff]/20"
-            }`}
-            title="Generate landscape or scenery image"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <path d="M21 8a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
-              <path d="M21 12c0 4.418-3.582 8-8 8s-8-3.582-8-8" />
-              <path d="M12 20v-8" />
-              <path d="M8 16c1 1 3 2 4 2s3-1 4-2" />
-              <path d="M2 12s2 4 5 4" />
-              <path d="M22 12s-2 4-5 4" />
-            </svg>
-            <span className="text-sm font-medium">Scenery</span>
-          </button>
-        </div>
+              <button
+                onClick={() => handleSubjectSelect("nature")}
+                className={`flex items-center px-4 py-3 rounded-full border-2 transition-all ${
+                  selectedSubject === "nature"
+                    ? "border-[#ffee00] bg-[#ffee00] text-black"
+                    : "border-[#b494ff] hover:bg-[#b494ff]/20"
+                }`}
+                title="Generate landscape or scenery image"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2"
+                >
+                  <path d="M21 8a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                  <path d="M21 12c0 4.418-3.582 8-8 8s-8-3.582-8-8" />
+                  <path d="M12 20v-8" />
+                  <path d="M8 16c1 1 3 2 4 2s3-1 4-2" />
+                  <path d="M2 12s2 4 5 4" />
+                  <path d="M22 12s-2 4-5 4" />
+                </svg>
+                <span className="text-sm font-medium">Scenery</span>
+              </button>
+            </div>
 
-        {/* Image preview or Map with enhanced styling */}
-        <div className="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden border-4 border-[#b494ff] shadow-lg shadow-[#b494ff]/20">
-          {imageUrl ? (
-            // Show generated image when available
-            <Image
-              src={imageUrl}
-              alt="Generated image"
-              fill
-              sizes="(max-width: 768px) 100vw, 500px"
-              className="object-cover"
-              priority
-            />
-          ) : (
-            // Show map when no image is generated
-            <div
-              className={`h-full w-full ${isLoading ? "animate-pulse" : ""}`}
-            >
-              <LocationMap
-                initialLat={location?.latitude || 59.5225}
-                initialLng={location?.longitude || 10.6866}
-                onLocationChange={handleMapLocationChange}
-              />
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-                  <div className="relative w-16 h-16">
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-[#b494ff]/30 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-[#ffee00] rounded-full animate-spin"></div>
-                  </div>
+            {/* Image preview or Map with enhanced styling */}
+            <div className="relative w-full aspect-square rounded-3xl mb-6 overflow-hidden border-4 border-[#b494ff] shadow-lg shadow-[#b494ff]/20">
+              {imageUrl ? (
+                // Show generated image when available
+                <Image
+                  src={imageUrl}
+                  alt="Generated image"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 500px"
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                // Show map when no image is generated
+                <div
+                  className={`h-full w-full ${
+                    isLoading ? "animate-pulse" : ""
+                  }`}
+                >
+                  <LocationMap
+                    initialLat={location?.latitude || 59.5225}
+                    initialLng={location?.longitude || 10.6866}
+                    onLocationChange={handleMapLocationChange}
+                  />
+                  {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+                      <div className="relative w-16 h-16">
+                        <div className="absolute top-0 left-0 w-full h-full border-4 border-[#b494ff]/30 rounded-full"></div>
+                        <div className="absolute top-0 left-0 w-full h-full border-4 border-t-[#ffee00] rounded-full animate-spin"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Action buttons */}
-        {!imageUrl ? (
-          <button
-            onClick={handleGenerateClick}
-            disabled={isLoading}
-            className="w-full py-4 bg-[#ffee00] text-black font-bold rounded-xl mb-4 hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
-          >
-            {location?.isManuallySet
-              ? "Generate from Map Location"
-              : "Generate from My Location"}
-          </button>
-        ) : (
-          <div className="flex gap-4 mb-4">
-            <button
-              onClick={handleReRoll}
-              disabled={isLoading}
-              className="w-1/2 py-4 bg-[#ffee00] text-black font-bold rounded-xl hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
-            >
-              ReRoll
-            </button>
-            <button
-              onClick={handleSetNewLocation}
-              disabled={isLoading}
-              className="w-1/2 py-4 border-2 border-[#b494ff] text-white font-bold rounded-xl hover:bg-[#b494ff]/20 disabled:bg-gray-800 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
-            >
-              Set New Location
-            </button>
+            {/* Action buttons */}
+            {!imageUrl ? (
+              <button
+                onClick={handleGenerateClick}
+                disabled={isLoading}
+                className="w-full py-4 bg-[#ffee00] text-black font-bold rounded-xl mb-4 hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
+              >
+                {location?.isManuallySet
+                  ? "Generate from Map Location"
+                  : "Generate from My Location"}
+              </button>
+            ) : (
+              <div className="flex gap-4 mb-4">
+                <button
+                  onClick={handleReRoll}
+                  disabled={isLoading}
+                  className="w-1/2 py-4 bg-[#ffee00] text-black font-bold rounded-xl hover:bg-[#ffee00]/90 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#ffee00]/20 transform hover:scale-[1.02]"
+                >
+                  ReRoll
+                </button>
+                <button
+                  onClick={handleSetNewLocation}
+                  disabled={isLoading}
+                  className="w-1/2 py-4 border-2 border-[#b494ff] text-white font-bold rounded-xl hover:bg-[#b494ff]/20 disabled:bg-gray-800 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
+                >
+                  Set New Location
+                </button>
+              </div>
+            )}
+
+            {showFetchButton && !imageUrl && (
+              <button
+                onClick={() => handleFetchResult(predictionId)}
+                disabled={isLoading}
+                className="w-full mt-4 py-3 border-2 border-[#b494ff] text-white font-medium rounded-xl hover:bg-[#b494ff]/20 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
+              >
+                Check Status
+              </button>
+            )}
+
+            {/* Optional logout button */}
+            <div className="mt-8 text-center">
+              <button
+                onClick={handleLogout}
+                className="text-xs text-gray-400 hover:text-white underline"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-        )}
-
-        {showFetchButton && !imageUrl && (
-          <button
-            onClick={() => handleFetchResult(predictionId)}
-            disabled={isLoading}
-            className="w-full mt-4 py-3 border-2 border-[#b494ff] text-white font-medium rounded-xl hover:bg-[#b494ff]/20 disabled:border-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
-          >
-            Check Status
-          </button>
-        )}
-      </div>
-    </main>
+        </main>
+      )}
+    </>
   );
 }

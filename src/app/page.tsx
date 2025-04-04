@@ -642,6 +642,12 @@ export default function Home() {
     // Keep the existing location data but allow user to change it on the map
   };
 
+  // Toggle prompt accordion
+  const [showPrompt, setShowPrompt] = useState<boolean>(false);
+  const togglePrompt = () => {
+    setShowPrompt(!showPrompt);
+  };
+
   return (
     <>
       {!isAuthenticated ? (
@@ -820,6 +826,39 @@ export default function Home() {
               >
                 Check Status
               </button>
+            )}
+
+            {/* Prompt accordion */}
+            {prompt && (
+              <div className="mt-6 w-full">
+                <button
+                  onClick={togglePrompt}
+                  className="flex items-center justify-between w-full px-4 py-2 bg-[#2A2A2A] rounded-xl text-sm font-medium text-white hover:bg-[#3A3A3A] transition-all"
+                >
+                  <span>View Image Prompt</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-transform duration-300 ${
+                      showPrompt ? "rotate-180" : ""
+                    }`}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                {showPrompt && (
+                  <div className="mt-2 p-4 bg-[#2A2A2A] rounded-xl text-xs text-gray-300 max-h-60 overflow-y-auto whitespace-pre-wrap">
+                    {prompt}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Optional logout button */}

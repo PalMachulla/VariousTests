@@ -322,6 +322,26 @@ export default function Home() {
     // Start with a fallback prompt in case the enhancement API fails
     const subjectDescription = getSubjectDescription(selectedSubject);
 
+    // Function to suggest appropriate clothing based on temperature
+    const getBasicClothingSuggestion = (temp: number | string): string => {
+      // Parse string temperature if needed
+      const temperature =
+        typeof temp === "string"
+          ? parseFloat(temp.toString().replace("°C", ""))
+          : temp;
+
+      if (isNaN(temperature)) return "weather-appropriate clothing";
+
+      if (temperature < 0) return "warm winter clothing";
+      if (temperature < 10) return "jacket or coat";
+      if (temperature < 15) return "light jacket or sweater";
+      if (temperature < 20) return "long sleeves";
+      if (temperature < 25) return "casual spring/fall attire";
+      return "light summer clothing";
+    };
+
+    const clothingSuggestion = getBasicClothingSuggestion(weatherData.temp);
+
     const fallbackPrompt = `Professional photo in ${
       weatherData.city || "a location"
     }, ${weatherData.country || ""}. ${weatherData.description || ""}, ${
@@ -331,6 +351,9 @@ export default function Home() {
 ${subjectDescription}
 
 Important: Subject MUST be using a mobile phone prominently in the scene.
+Subject MUST be wearing ${clothingSuggestion} appropriate for ${
+      weatherData.temp
+    }°C and ${weatherData.description || "current weather"}.
 
 Visible street sign or direction sign showing "Dentsu" and "${(
       weatherData.city || "LOCATION"

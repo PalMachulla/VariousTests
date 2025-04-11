@@ -90,6 +90,74 @@ function getLightingConditions(timeOfDay: string, weather: any): string {
   }
 }
 
+// Helper function to suggest appropriate clothing based on temperature and weather
+function getClothingSuggestion(
+  temperature: number | string,
+  weatherDesc: string
+): string {
+  // Handle case where temperature is a string
+  const temp =
+    typeof temperature === "string"
+      ? parseFloat(temperature.replace("°C", ""))
+      : temperature;
+
+  // If we couldn't parse the temperature, provide a generic suggestion
+  if (isNaN(temp)) {
+    return "clothing appropriate for the local weather conditions";
+  }
+
+  // Weather condition indicators
+  const isRainy = /rain|drizzle|shower|precipitation/i.test(weatherDesc);
+  const isSnowy = /snow|sleet|blizzard/i.test(weatherDesc);
+  const isWindy = /wind|gust|breez/i.test(weatherDesc);
+  const isFoggy = /fog|mist|haz[ey]/i.test(weatherDesc);
+
+  // Base clothing by temperature range
+  let clothing = "";
+
+  if (temp < -10) {
+    clothing =
+      "heavy winter clothing with multiple layers, thermal underwear, thick winter coat, winter hat, mittens/gloves, scarf, and insulated boots";
+  } else if (temp < 0) {
+    clothing = "winter coat, hat, gloves, scarf, and warm boots";
+  } else if (temp < 5) {
+    clothing = "warm coat, hat, light gloves, and potentially a scarf";
+  } else if (temp < 10) {
+    clothing =
+      "medium-weight jacket or coat with a sweater or light layers underneath";
+  } else if (temp < 15) {
+    clothing = "light jacket or heavy sweater with long pants";
+  } else if (temp < 20) {
+    clothing = "light sweater or long-sleeved shirt with pants or jeans";
+  } else if (temp < 25) {
+    clothing =
+      "t-shirt or light shirt with pants, possibly a light overshirt or cardigan";
+  } else if (temp < 30) {
+    clothing =
+      "light, breathable clothing like t-shirts and shorts or light pants";
+  } else {
+    clothing =
+      "minimal, very light summer clothing, possibly with sun protection like a hat or light cover-up";
+  }
+
+  // Add weather-specific additions
+  if (isRainy) {
+    clothing +=
+      ", complemented with a raincoat/waterproof jacket, umbrella, or rain boots";
+  }
+  if (isSnowy) {
+    clothing += ", with waterproof outer layers and snow boots";
+  }
+  if (isWindy && temp < 20) {
+    clothing += ", with windproof outer layers";
+  }
+  if (isFoggy) {
+    clothing += ", possibly with bright or reflective elements for visibility";
+  }
+
+  return clothing;
+}
+
 // Get additional instructions based on subject type
 function getSubjectSpecificInstructions(subject: string): string {
   switch (subject) {
@@ -151,6 +219,12 @@ export async function POST(request: NextRequest) {
     const timeOfDay = getTimeOfDay(localTime);
     const lightingConditions = getLightingConditions(timeOfDay, weather);
 
+    // Get clothing suggestion based on temperature and weather
+    const clothingSuggestion = getClothingSuggestion(
+      weather.temp,
+      weather.description || ""
+    );
+
     // Build a detailed context prompt for GPT
     const promptEngineering = `
 Create a concise, compelling image generation prompt (max 200 words) for a photo in ${location}, ${
@@ -166,6 +240,11 @@ Location details:
 
 Subject: ${subject} who MUST be actively using a mobile phone (taking photos, checking phone, showing screen to others, etc.)
 
+IMPORTANT CLOTHING INSTRUCTION:
+The person(s) MUST be wearing ${clothingSuggestion}, which is appropriate for ${
+      weather.temp || ""
+    }°C and ${weather.description || "the current weather"}.
+
 IMPORTANT GUIDELINES:
 1. KEEP IT CONCISE - no more than 200 words total
 2. Focus on VISUAL elements only
@@ -173,7 +252,10 @@ IMPORTANT GUIDELINES:
 4. Include a visible sign with "Dentsu" and "${location.toUpperCase()}"
 5. Maintain a professional photography style (Fujifilm medium format camera aesthetic)
 6. Specify mood, composition, focal length, lighting, and key visual elements
-7. Don't use words like "prompt" or "image"
+7. ENSURE the clothing accurately reflects the current temperature of ${
+      weather.temp || ""
+    }°C and ${weather.description || "local weather conditions"}
+8. Don't use words like "prompt" or "image"
 
 Base your response on this prompt structure but improve it:
 ${basePrompt}
@@ -190,6 +272,7 @@ ${basePrompt}
         lightingConditions,
         location,
         coordinates,
+        clothingSuggestion, // Include clothing suggestion in metadata
       },
     });
   } catch (error: any) {
